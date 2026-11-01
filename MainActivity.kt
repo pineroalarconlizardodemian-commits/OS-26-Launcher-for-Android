@@ -18,28 +18,34 @@ class MainActivity : AppCompatActivity() {
     override fun onCreate(savedInstanceState: Bundle?) {
         super.onCreate(savedInstanceState)
 
-        // Pantalla completa (sin barras)
+        // Pantalla completa
         WindowCompat.setDecorFitsSystemWindows(window, false)
         WindowInsetsControllerCompat(window, window.decorView).apply {
             hide(WindowInsetsCompat.Type.systemBars())
             systemBarsBehavior = WindowInsetsControllerCompat.BEHAVIOR_SHOW_TRANSIENT_BARS_BY_SWIPE
         }
 
-        // Capas
+        // 1. Crear las vistas
         val home = HomeScreenView(this)
+        lock = LockScreenView(this)
+        cc = ControlCenterView(this)
 
-        lock = LockScreenView(this).apply {
-            onUnlock = { /* home visible, nada extra */ }
+        // 2. CONECTAR EL DESBLOQUEO (Swipe arriba en el lock)
+        lock.onUnlock = {
+            // El lock ya se oculta solo, aquí no hace falta hacer nada más
         }
 
-        cc = ControlCenterView(this).apply {
-            onClose = { /* solo se oculta */ }
+        // 3. CONECTAR EL CENTRO DE CONTROL (Swipe esquina superior derecha)
+        lock.onControlCenter = { 
+            cc.open() 
         }
 
-        // Gesto desde esquina superior derecha del lock → abre CC
-        lock.onControlCenter = { cc.open() }
+        // 4. CONECTAR EL CIERRE DEL CENTRO DE CONTROL
+        cc.onClose = { 
+            lock.requestFocus() 
+        }
 
-        // Root
+        // 5. Añadir todo a la pantalla en el orden correcto (el CC va al final para estar arriba)
         val root = FrameLayout(this).apply {
             addView(home)
             addView(lock, FrameLayout.LayoutParams(
