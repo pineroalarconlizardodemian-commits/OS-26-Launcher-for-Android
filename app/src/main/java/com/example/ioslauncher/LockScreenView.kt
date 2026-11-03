@@ -30,7 +30,7 @@ import java.util.Locale
 class LockScreenView(context: Context) : FrameLayout(context) {
 
     var onUnlock: (() -> Unit)? = null
-
+    var onControlCenter: (() -> Unit)? = null
     private val wallpaper = ImageView(context).apply {
         scaleType = ImageView.ScaleType.CENTER_CROP
     }
