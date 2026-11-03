@@ -206,7 +206,7 @@ class LockScreenView(context: Context) : FrameLayout(context) {
         })
 
         val ov = FrameLayout(context).apply {
-            setBackgroundColor(0x88000000)
+            setBackgroundColor(0x88000000.toInt())
             alpha = 0f
             setOnClickListener { hideEditor() }
             addView(card, LayoutParams(LayoutParams.MATCH_PARENT, LayoutParams.WRAP_CONTENT, Gravity.BOTTOM).apply {
