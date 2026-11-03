@@ -31,6 +31,7 @@ class LockScreenView(context: Context) : FrameLayout(context) {
 
     var onUnlock: (() -> Unit)? = null
     var onControlCenter: (() -> Unit)? = null
+
     private val wallpaper = ImageView(context).apply {
         scaleType = ImageView.ScaleType.CENTER_CROP
     }
@@ -50,6 +51,15 @@ class LockScreenView(context: Context) : FrameLayout(context) {
         gravity = Gravity.CENTER
     }
     private var overlay: FrameLayout? = null
+
+    // Variables para el Centro de Control
+    private var ccStartX = 0f
+    private var ccStartY = 0f
+    private var ccTracking = false
+
+    // Variables para el desbloqueo
+    private var downY = 0f
+    private var dragging = false
 
     private val ticker = object : BroadcastReceiver() {
         override fun onReceive(c: Context?, i: Intent?) { refreshClockAndDate() }
@@ -321,15 +331,41 @@ class LockScreenView(context: Context) : FrameLayout(context) {
         }
     }
 
-    // ---------- Swipe unlock ----------
-
-    private var downY = 0f
-    private var dragging = false
+    // ---------- Gestos ----------
 
     override fun dispatchTouchEvent(e: MotionEvent): Boolean {
+        // 1. Gesto para el Centro de Control (esquina sup. derecha)
+        if (overlay == null && !ccTracking) {
+            if (e.actionMasked == MotionEvent.ACTION_DOWN) {
+                if (e.rawX > width * 0.7f && e.rawY < dp(40)) {
+                    ccTracking = true
+                    ccStartX = e.rawX
+                    ccStartY = e.rawY
+                    return true
+                }
+            }
+        }
+        
+        if (ccTracking) {
+            if (e.actionMasked == MotionEvent.ACTION_MOVE &&
+                (e.rawY - ccStartY > dp(30) || ccStartX - e.rawX > dp(30))) {
+                ccTracking = false
+                onControlCenter?.invoke()
+                return true
+            }
+            if (e.actionMasked == MotionEvent.ACTION_UP || e.actionMasked == MotionEvent.ACTION_CANCEL) {
+                ccTracking = false
+            }
+            return true
+        }
+
+        // 2. Desbloqueo normal (Swipe arriba)
         if (overlay == null) {
             when (e.actionMasked) {
-                MotionEvent.ACTION_DOWN -> { downY = e.rawY; dragging = false }
+                MotionEvent.ACTION_DOWN -> { 
+                    downY = e.rawY
+                    dragging = false 
+                }
                 MotionEvent.ACTION_MOVE -> {
                     val dy = e.rawY - downY
                     if (dy < -dp(12)) dragging = true
